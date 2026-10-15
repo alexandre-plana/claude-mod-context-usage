@@ -195,7 +195,7 @@ export const register: Register = on => {
           return r
         })
         .join('')
-      const source = `<svg xmlns="http://www.w3.org/2000/svg" width="4000" height="${thick}" viewBox="0 0 1000 ${thick}" preserveAspectRatio="none"><rect width="1000" height="${thick}" rx="2" fill="rgba(128,128,128,0.22)"/><g opacity="${loading ? 0.45 : 1}">${rects}</g>${loading ? `<defs><linearGradient id="sh"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><rect x="-300" y="0" width="300" height="${thick}" fill="url(#sh)"><animate attributeName="x" from="-300" to="1000" dur="1.1s" repeatCount="indefinite"/></rect>` : ''}${limit > 0 ? `<rect x="${((limit / Math.max(1, s.max)) * 1000).toFixed(1)}" y="0" width="3" height="${thick}" fill="#f5f5f4"/>` : ''}</svg>`
+      const source = `<svg xmlns="http://www.w3.org/2000/svg" width="4000" height="${thick}" viewBox="0 0 1000 ${thick}" preserveAspectRatio="none"><rect width="1000" height="${thick}" rx="2" fill="rgba(128,128,128,0.22)"/><g opacity="${loading ? 0.45 : 1}">${rects}</g>${limit > 0 ? `<rect x="${((limit / Math.max(1, s.max)) * 1000).toFixed(1)}" y="0" width="3" height="${thick}" fill="#f5f5f4"/>` : ''}</svg>`
       bar = <Svg source={source} alt="Utilisation du contexte" height={thick} />
     } else {
       bar = (
@@ -207,11 +207,55 @@ export const register: Register = on => {
       )
     }
 
+    const lines = s.cats.filter(c => c.tokens > 0)
+    const card = (active: string, side: 'left' | 'right') => (
+      <Box
+        position="absolute"
+        top={-(lines.length + 3)}
+        {...(side === 'left' ? { left: 0 } : { right: 0 })}
+        display="none"
+        hover={{ display: 'flex' }}
+        flexDirection="column"
+        borderStyle="round"
+        paddingX={1}
+        backgroundColor="subtle"
+      >
+        <Text bold>{`Contexte : ${fmtPct(s.percent)} · ${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text>
+        {lines.map(c => (
+          <Box gap={1}>
+            <Text color={c.kind === 'free' || c.kind === 'deferred' ? undefined : colorOf(c)} dimColor={c.kind === 'free' || c.kind === 'deferred'}>■</Text>
+            <Box flexGrow={1}><Text bold={c.name === active} wrap="truncate">{c.name}</Text></Box>
+            <Text bold={c.name === active} dimColor={c.name !== active}>{`${fmtTokens(c.tokens)}  ${fmtPct((c.tokens / Math.max(1, s.max)) * 100)}`}</Text>
+          </Box>
+        ))}
+      </Box>
+    )
+    // Zones de survol invisibles posées sur la barre : une par catégorie, la carte s'ouvre au-dessus de celle survolée.
+    const usedFrac = shown.reduce((a, c) => a + c.tokens / Math.max(1, s.max), 0)
+    const zones = shown.map(c => ({ name: c.name, frac: c.tokens / Math.max(1, s.max) }))
+    zones.push({ name: 'Free space', frac: Math.max(0, 1 - usedFrac) })
+    let acc = 0
+    const overlay = (
+      <Box position="absolute" top={0} left={0} right={0} height={1} flexDirection="row">
+        {zones.map((z, i) => {
+          const side = acc + z.frac / 2 > 0.5 ? 'right' : 'left'
+          acc += z.frac
+          return (
+            <Box key={`z${i}`} flexGrow={Math.max(1, Math.round(z.frac * 1000))} height={1}>
+              {card(z.name, side)}
+            </Box>
+          )
+        })}
+      </Box>
+    )
+
     const row = (
       <Box width="100%" gap={2} alignItems="center">
-        <Box flexShrink={0}><Text bold wrap="truncate">{s.busy === 'compact' ? 'Compactage…' : `${fmtPct(s.percent)} utilisé`}</Text></Box>
-        <Box flexGrow={1} minWidth={0} overflow="hidden" marginX={2}>{bar}</Box>
-        <Box flexShrink={0}><Text dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
+        <Box flexGrow={1} minWidth={0} gap={2} alignItems="center">
+          <Box flexShrink={0}><Text bold wrap="truncate">{s.busy === 'compact' ? 'Compactage…' : `${fmtPct(s.percent)} utilisé`}</Text></Box>
+          <Box flexGrow={1} minWidth={0} marginX={2}>{bar}{overlay}</Box>
+          <Box flexShrink={0}><Text dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
+        </Box>
         <Box flexShrink={0} marginLeft={1}>
         <Select
           key="auto"
