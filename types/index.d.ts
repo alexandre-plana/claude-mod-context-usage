@@ -14,6 +14,8 @@ export type Snap = {
   skills: Item[]
   rates: Rate[]
   cost?: number
+  autoAt?: number
+  busy?: string
 }
 
 declare module 'claude-code' {
