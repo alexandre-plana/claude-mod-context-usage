@@ -127,13 +127,6 @@ export const register: Register = on => {
 
     const shown = s.cats.filter(c => c.kind !== 'deferred' && c.kind !== 'free' && c.tokens > 0)
 
-    // État du contexte : une icône (forme + couleur du thème), dans le bouton Compacter.
-    const level =
-      s.tokens >= 650_000 ? { glyph: '■', color: 'error' }
-      : s.tokens >= 500_000 ? { glyph: '◆', color: 'claude' }
-      : s.tokens >= 300_000 ? { glyph: '▲', color: 'warning' }
-      : { glyph: '●', color: 'success' }
-
     // Fine bar: a thin SVG where the surface has one, else a one-cell Box bar.
     const segs = shown.map(c => ({
       frac: c.tokens / Math.max(1, s.max),
@@ -168,9 +161,7 @@ export const register: Register = on => {
         <Box flexShrink={0}><Text bold wrap="truncate">{`${fmtPct(s.percent)} utilisé`}</Text></Box>
         <Box flexGrow={1} minWidth={0} overflow="hidden">{bar}</Box>
         <Box flexShrink={0}><Text dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
-        <Button key="compact" label="Compacter" hotkey="c" onPress={compact}>
-          <Text color={level.color} bold>{level.glyph}</Text> Compacter
-        </Button>
+        <Button key="compact" label="Compacter" hotkey="c" onPress={compact} />
       </Box>
     )
   })
