@@ -131,9 +131,12 @@ export const register: Register = on => {
     const deferred = s.cats.filter(c => c.kind === 'deferred' && c.tokens > 0)
     const total = shown.reduce((a, c) => a + c.tokens, 0)
     const pct = Math.min(100, s.percent)
-    const alert = s.tokens >= 650_000 ? 'error' : s.tokens >= 500_000 ? 'claude' : s.tokens >= 300_000 ? 'warning' : undefined
-    const ink = alert ? 'inverseText' : undefined
-    const gaugeColor = alert ? 'inverseText' : pct >= 85 ? 'error' : pct >= 65 ? 'warning' : 'text'
+    // État du contexte : une icône (forme + couleur du thème) plutôt qu'un fond coloré.
+    const level =
+      s.tokens >= 650_000 ? { glyph: '■', color: 'error', label: 'Contexte critique (650k+)' }
+      : s.tokens >= 500_000 ? { glyph: '◆', color: 'claude', label: 'Contexte très élevé (500k+)' }
+      : s.tokens >= 300_000 ? { glyph: '▲', color: 'warning', label: 'Contexte élevé (300k+)' }
+      : { glyph: '●', color: 'success', label: 'Contexte normal' }
 
     // Fine bar: a thin SVG where the surface has one, else a one-cell Box bar.
     const bar = (segs: { frac: number; color: string }[], thick: number) => {
@@ -172,9 +175,10 @@ export const register: Register = on => {
 
     const header = (
       <Box width="100%" gap={2} alignItems="center">
-        <Box flexShrink={0}><Text color={gaugeColor} bold wrap="truncate">{`${fmtPct(s.percent)} utilisé`}</Text></Box>
+        <Box flexShrink={0}><Text bold wrap="truncate">{`${fmtPct(s.percent)} utilisé`}</Text></Box>
         <Box flexGrow={1} minWidth={0} overflow="hidden">{bar(segs, 4)}</Box>
-        <Box flexShrink={0}><Text color={ink} dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
+        <Box flexShrink={0}><Text dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
+        <Box flexShrink={0}><Text color={level.color} bold wrap="truncate">{level.glyph}</Text></Box>
         <Button key="compact" label="Compacter" hotkey="c" onPress={compact} />
         <Button
           key="toggle"
@@ -190,7 +194,7 @@ export const register: Register = on => {
     )
 
     const wrap = (children: any) => (
-      <Box flexDirection="column" width="100%" backgroundColor={alert}>
+      <Box flexDirection="column" width="100%">
         {children}
       </Box>
     )
@@ -205,9 +209,9 @@ export const register: Register = on => {
     const row = (label: string, value: number, of: number, color: string, right: string) => (
       <Box gap={1} width="100%">
         <Box width={1} height={1} backgroundColor={color} />
-        <Box width={26}><Text color={ink} wrap="truncate-end">{label}</Text></Box>
+        <Box width={26}><Text wrap="truncate-end">{label}</Text></Box>
         {meter(value, of, color)}
-        <Box width={16} justifyContent="flex-end"><Text color={ink} dimColor>{right}</Text></Box>
+        <Box width={16} justifyContent="flex-end"><Text dimColor>{right}</Text></Box>
       </Box>
     )
 
@@ -224,14 +228,14 @@ export const register: Register = on => {
 
     if (deferred.length > 0) {
       blocks.push(
-        <Text color={ink} dimColor>
+        <Text dimColor>
           {`Différés (hors fenêtre) : ${deferred.map(d => `${d.name} ${fmtTokens(d.tokens)}`).join(' · ')}`}
         </Text>,
       )
     }
     if (s.threshold !== undefined) {
       blocks.push(
-        <Text color={ink} dimColor>
+        <Text dimColor>
           {`Auto-compactage à ${fmtTokens(s.threshold)} (${fmtPct((s.threshold / s.max) * 100)} de la fenêtre)`}
         </Text>,
       )
@@ -246,7 +250,7 @@ export const register: Register = on => {
       if (items.length === 0) continue
       blocks.push(
         <Box flexDirection="column" marginTop={1}>
-          <Text color={ink} bold dimColor>{title}</Text>
+          <Text bold dimColor>{title}</Text>
           {items.map(i =>
             row(i.name, i.tokens, items[0]!.tokens, color, `${fmtTokens(i.tokens)}  ${fmtPct((i.tokens / s.max) * 100)}`),
           )}
@@ -257,7 +261,7 @@ export const register: Register = on => {
     if (s.rates.length > 0) {
       blocks.push(
         <Box flexDirection="column" marginTop={1}>
-          <Text color={ink} bold dimColor>Limites d’utilisation</Text>
+          <Text bold dimColor>Limites d’utilisation</Text>
           {s.rates.map(r =>
             row(
               r.kind === 'five_hour' ? 'Session 5 h' : r.kind === 'seven_day' ? 'Semaine' : r.kind,
@@ -272,7 +276,7 @@ export const register: Register = on => {
     }
 
     if (s.cost !== undefined) {
-      blocks.push(<Text color={ink} dimColor>{`Coût de la session : $${s.cost.toFixed(2)}`}</Text>)
+      blocks.push(<Text dimColor>{`Coût de la session : $${s.cost.toFixed(2)}`}</Text>)
     }
 
     return wrap(blocks)

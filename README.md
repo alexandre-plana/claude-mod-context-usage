@@ -7,13 +7,14 @@ Un mod pour Claude Code qui affiche en permanence l'utilisation du contexte de l
 - **Mode condensé (par défaut)** : une seule ligne avec le pourcentage utilisé, une barre fine colorée par catégorie (messages, outils système, fichiers mémoire, outils MCP, etc.), le compteur `tokens / fenêtre`, et les boutons **Compacter** et **Étendre**.
 - **Bouton Compacter** : lance le compactage de la conversation, comme `/compact`.
 - **Mode étendu** : détail par catégorie avec graphiques en barres, plus gros serveurs MCP, fichiers mémoire et skills, seuil d'auto-compactage, éléments différés, limites d'utilisation (session 5 h, semaine) et coût de la session.
-- **Alerte par couleur de fond**, avec les couleurs du thème Claude Code :
+- **Icône d'état** entre le compteur et le bouton Compacter, avec les couleurs du thème Claude Code (la forme change aussi, pour rester lisible sans la couleur) :
 
-  | Contexte utilisé | Fond |
+  | Contexte utilisé | Icône |
   |---|---|
-  | 300k tokens et plus | jaune (`warning`) |
-  | 500k tokens et plus | orange (`claude`) |
-  | 650k tokens et plus | rouge (`error`) |
+  | moins de 300k tokens | ● vert (`success`) |
+  | 300k et plus | ▲ jaune (`warning`) |
+  | 500k et plus | ◆ orange (`claude`) |
+  | 650k et plus | ■ rouge (`error`) |
 
 - Le texte et les couleurs suivent le thème de l'application : même typographie que Claude Code.
 - Raccourcis : `c` compacte, `e` étend ou réduit, quand la bande a le focus.
