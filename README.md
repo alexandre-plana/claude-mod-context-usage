@@ -4,10 +4,9 @@ Un mod pour Claude Code qui affiche en permanence l'utilisation du contexte de l
 
 ## Fonctionnalités
 
-- **Mode condensé (par défaut)** : une seule ligne avec le pourcentage utilisé, une barre fine colorée par catégorie (messages, outils système, fichiers mémoire, outils MCP, etc.), le compteur `tokens / fenêtre`, et les boutons **Compacter** et **Étendre**.
-- **Bouton Compacter** : lance le compactage de la conversation, comme `/compact`.
-- **Mode étendu** : détail par catégorie avec graphiques en barres, plus gros serveurs MCP, fichiers mémoire et skills, seuil d'auto-compactage, éléments différés, limites d'utilisation (session 5 h, semaine) et coût de la session.
-- **Icône d'état** entre le compteur et le bouton Compacter, avec les couleurs du thème Claude Code (la forme change aussi, pour rester lisible sans la couleur) :
+- **Une seule ligne** : pourcentage utilisé, barre fine colorée par catégorie (messages, outils système, fichiers mémoire, outils MCP, etc.) qui occupe la largeur disponible, compteur `tokens / fenêtre` et bouton **Compacter**.
+- **Bouton Compacter** : lance le compactage de la conversation, comme `/compact`. Raccourci `c` quand la bande a le focus.
+- **Icône d'état** dans le bouton Compacter, avant le texte, avec les couleurs du thème Claude Code (la forme change aussi, pour rester lisible sans la couleur) :
 
   | Contexte utilisé | Icône |
   |---|---|
@@ -17,7 +16,8 @@ Un mod pour Claude Code qui affiche en permanence l'utilisation du contexte de l
   | 650k et plus | ■ rouge (`error`) |
 
 - Le texte et les couleurs suivent le thème de l'application : même typographie que Claude Code.
-- Raccourcis : `c` compacte, `e` étend ou réduit, quand la bande a le focus.
+
+Le détail par catégorie reste disponible dans Claude Code (`/context`).
 
 Les chiffres viennent de `$.session.usage({ breakdown: 'summary' })`, la même source que `/context` (estimation locale, aucune requête supplémentaire). Ils sont rafraîchis au début et à la fin de chaque tour, après chaque appel d'outil, après un compactage, et toutes les 5 secondes.
 

@@ -3,7 +3,6 @@ import type { Register } from 'claude-code'
 import type { Cat, Item, Snap } from '../types'
 
 const snap = { plugin: 'context-band', key: 'snap' } as const
-const isExpanded = { plugin: 'context-band', key: 'isExpanded' } as const
 
 const COLORS: Record<string, string> = {
   messages: '#3b82f6',
@@ -111,7 +110,6 @@ export const register: Register = on => {
     const s = (await $.state.get(snap)).value ?? null
     if (e.props.hasSurvey || s === null) return next(e)
 
-    const expanded = (await $.state.get(isExpanded)).value ?? false
     const table: any = $.ui.resolve(e)
     const { Box, Text, Button } = table
     const Svg = table.Svg
@@ -127,158 +125,53 @@ export const register: Register = on => {
       }
     }
 
-    const shown = s.cats.filter(c => c.kind !== 'deferred' && c.tokens > 0)
-    const deferred = s.cats.filter(c => c.kind === 'deferred' && c.tokens > 0)
-    const total = shown.reduce((a, c) => a + c.tokens, 0)
-    const pct = Math.min(100, s.percent)
-    // État du contexte : une icône (forme + couleur du thème) plutôt qu'un fond coloré.
+    const shown = s.cats.filter(c => c.kind !== 'deferred' && c.kind !== 'free' && c.tokens > 0)
+
+    // État du contexte : une icône (forme + couleur du thème), dans le bouton Compacter.
     const level =
-      s.tokens >= 650_000 ? { glyph: '■', color: 'error', label: 'Contexte critique (650k+)' }
-      : s.tokens >= 500_000 ? { glyph: '◆', color: 'claude', label: 'Contexte très élevé (500k+)' }
-      : s.tokens >= 300_000 ? { glyph: '▲', color: 'warning', label: 'Contexte élevé (300k+)' }
-      : { glyph: '●', color: 'success', label: 'Contexte normal' }
+      s.tokens >= 650_000 ? { glyph: '■', color: 'error' }
+      : s.tokens >= 500_000 ? { glyph: '◆', color: 'claude' }
+      : s.tokens >= 300_000 ? { glyph: '▲', color: 'warning' }
+      : { glyph: '●', color: 'success' }
 
     // Fine bar: a thin SVG where the surface has one, else a one-cell Box bar.
-    const bar = (segs: { frac: number; color: string }[], thick: number) => {
-      if (Svg) {
-        let x = 0
-        const rects = segs
-          .map(g => {
-            const w = Math.max(0, g.frac) * 1000
-            const r = `<rect x="${x.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="${thick}" fill="${g.color}"/>`
-            x += w
-            return r
-          })
-          .join('')
-        const source = `<svg xmlns="http://www.w3.org/2000/svg" width="4000" height="${thick}" viewBox="0 0 1000 ${thick}" preserveAspectRatio="none"><rect width="1000" height="${thick}" rx="2" fill="rgba(128,128,128,0.22)"/>${rects}</svg>`
-        return <Svg source={source} alt="Utilisation du contexte" height={thick} />
-      }
-      return (
+    const segs = shown.map(c => ({
+      frac: c.tokens / Math.max(1, s.max),
+      color: colorOf(c),
+    }))
+    const thick = 4
+    let bar: any
+    if (Svg) {
+      let x = 0
+      const rects = segs
+        .map(g => {
+          const w = Math.max(0, g.frac) * 1000
+          const r = `<rect x="${x.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="${thick}" fill="${g.color}"/>`
+          x += w
+          return r
+        })
+        .join('')
+      const source = `<svg xmlns="http://www.w3.org/2000/svg" width="4000" height="${thick}" viewBox="0 0 1000 ${thick}" preserveAspectRatio="none"><rect width="1000" height="${thick}" rx="2" fill="rgba(128,128,128,0.22)"/>${rects}</svg>`
+      bar = <Svg source={source} alt="Utilisation du contexte" height={thick} />
+    } else {
+      bar = (
         <Box height={1} width="100%" backgroundColor="subtle">
           {segs.map(g => (
-            <Box
-              flexGrow={Math.max(1, Math.round(g.frac * 1000))}
-              backgroundColor={g.color === 'subtle' ? 'subtle' : g.color}
-            />
+            <Box flexGrow={Math.max(1, Math.round(g.frac * 1000))} backgroundColor={g.color} />
           ))}
         </Box>
       )
     }
 
-    const svgColor = (c: Cat): string => {
-      const k = colorOf(c)
-      return k === 'subtle' ? 'rgba(128,128,128,0.22)' : k
-    }
-    const segs = shown
-      .filter(c => c.kind !== 'free')
-      .map(c => ({ frac: c.tokens / Math.max(1, s.max), color: Svg ? svgColor(c) : colorOf(c) }))
-
-    const header = (
+    return (
       <Box width="100%" gap={2} alignItems="center">
-        <Box flexShrink={0}><Text bold wrap="truncate">{`${fmtPct(s.percent)} utilisé`}</Text></Box>
-        <Box flexGrow={1} minWidth={0} overflow="hidden">{bar(segs, 4)}</Box>
-        <Box flexShrink={0}><Text dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
-        <Box flexShrink={0}><Text color={level.color} bold wrap="truncate">{level.glyph}</Text></Box>
-        <Button key="compact" label="Compacter" hotkey="c" onPress={compact} />
-        <Button
-          key="toggle"
-          label={expanded ? 'Réduire' : 'Étendre'}
-          hotkey="e"
-          variant="secondary"
-          onPress={async () => {
-            const cur = await $.state.get(isExpanded)
-            await $.state.set(isExpanded, !(cur.value ?? false))
-          }}
-        />
+        <Box flexShrink={0}><Text bold wrap="truncate">{`${fmtPct(s.percent)} utilisé`}</Text></Box>
+        <Box flexGrow={1} minWidth={0} overflow="hidden">{bar}</Box>
+        <Box flexShrink={0}><Text dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
+        <Button key="compact" label="Compacter" hotkey="c" onPress={compact}>
+          <Text color={level.color} bold>{level.glyph}</Text> Compacter
+        </Button>
       </Box>
     )
-
-    const wrap = (children: any) => (
-      <Box flexDirection="column" width="100%">
-        {children}
-      </Box>
-    )
-
-    if (!expanded) return wrap(header)
-
-    const biggest = Math.max(1, ...shown.map(c => c.tokens))
-    const meter = (value: number, of: number, color: string) => (
-      <Box flexGrow={1} minWidth={0} overflow="hidden">{bar([{ frac: Math.min(1, value / of), color }], 4)}</Box>
-    )
-
-    const row = (label: string, value: number, of: number, color: string, right: string) => (
-      <Box gap={1} width="100%">
-        <Box width={1} height={1} backgroundColor={color} />
-        <Box width={26}><Text wrap="truncate-end">{label}</Text></Box>
-        {meter(value, of, color)}
-        <Box width={16} justifyContent="flex-end"><Text dimColor>{right}</Text></Box>
-      </Box>
-    )
-
-    const blocks: any[] = []
-
-    blocks.push(header)
-    blocks.push(
-      <Box flexDirection="column" marginTop={1}>
-        {[...shown].sort((a, b) => b.tokens - a.tokens).map(c =>
-          row(c.name, c.tokens, biggest, colorOf(c), `${fmtTokens(c.tokens)}  ${fmtPct((c.tokens / s.max) * 100)}`),
-        )}
-      </Box>,
-    )
-
-    if (deferred.length > 0) {
-      blocks.push(
-        <Text dimColor>
-          {`Différés (hors fenêtre) : ${deferred.map(d => `${d.name} ${fmtTokens(d.tokens)}`).join(' · ')}`}
-        </Text>,
-      )
-    }
-    if (s.threshold !== undefined) {
-      blocks.push(
-        <Text dimColor>
-          {`Auto-compactage à ${fmtTokens(s.threshold)} (${fmtPct((s.threshold / s.max) * 100)} de la fenêtre)`}
-        </Text>,
-      )
-    }
-
-    const sections: [string, Item[], string][] = [
-      ['Serveurs MCP', top(s.servers, 5), '#d99a0b'],
-      ['Fichiers mémoire', top(s.memory, 4), '#1aa37a'],
-      ['Skills', top(s.skills, 4), '#b4b4ad'],
-    ]
-    for (const [title, items, color] of sections) {
-      if (items.length === 0) continue
-      blocks.push(
-        <Box flexDirection="column" marginTop={1}>
-          <Text bold dimColor>{title}</Text>
-          {items.map(i =>
-            row(i.name, i.tokens, items[0]!.tokens, color, `${fmtTokens(i.tokens)}  ${fmtPct((i.tokens / s.max) * 100)}`),
-          )}
-        </Box>,
-      )
-    }
-
-    if (s.rates.length > 0) {
-      blocks.push(
-        <Box flexDirection="column" marginTop={1}>
-          <Text bold dimColor>Limites d’utilisation</Text>
-          {s.rates.map(r =>
-            row(
-              r.kind === 'five_hour' ? 'Session 5 h' : r.kind === 'seven_day' ? 'Semaine' : r.kind,
-              r.percentUsed,
-              100,
-              r.percentUsed >= 85 ? 'error' : r.percentUsed >= 65 ? 'warning' : 'success',
-              fmtPct(r.percentUsed),
-            ),
-          )}
-        </Box>,
-      )
-    }
-
-    if (s.cost !== undefined) {
-      blocks.push(<Text dimColor>{`Coût de la session : $${s.cost.toFixed(2)}`}</Text>)
-    }
-
-    return wrap(blocks)
   })
 }
