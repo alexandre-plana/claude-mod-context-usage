@@ -1,6 +1,6 @@
 {
   "name": "context-band",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Jauge de contexte permanente au-dessus de la barre de chat : barre colorée par catégorie, compactage manuel et automatique à seuil.",
   "types": "./types/index.d.ts",
   "author": {

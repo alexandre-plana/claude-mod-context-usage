@@ -91,9 +91,6 @@ export const register: Register = on => {
   })
 
   on('turn.start', async ($, e, next) => {
-    if (busy !== 'compact') busy = 'turn'
-    const cur = (await $.state.get(snap)).value
-    if (cur) await $.state.set(snap, { ...cur, busy })
     const fresh = due(false) ? build(await $.session.usage({ breakdown: 'summary' }).catch(() => null)) : null
     if (fresh) await $.state.set(snap, fresh)
     return next(e)
@@ -108,7 +105,6 @@ export const register: Register = on => {
 
   on('turn.complete', async ($, e, next) => {
     const r = await next(e)
-    if (busy === 'turn') busy = ''
     const fresh = due(true) ? build(await $.session.usage({ breakdown: 'summary' }).catch(() => null)) : null
     if (fresh) await $.state.set(snap, fresh)
 
@@ -213,7 +209,7 @@ export const register: Register = on => {
 
     const row = (
       <Box width="100%" gap={2} alignItems="center">
-        <Box flexShrink={0}><Text bold wrap="truncate">{s.busy === 'compact' ? 'Compactage…' : s.busy === 'turn' ? 'En cours…' : `${fmtPct(s.percent)} utilisé`}</Text></Box>
+        <Box flexShrink={0}><Text bold wrap="truncate">{s.busy === 'compact' ? 'Compactage…' : `${fmtPct(s.percent)} utilisé`}</Text></Box>
         <Box flexGrow={1} minWidth={0} overflow="hidden" marginX={2}>{bar}</Box>
         <Box flexShrink={0}><Text dimColor wrap="truncate">{`${fmtTokens(s.tokens)} / ${fmtTokens(s.max)}`}</Text></Box>
         <Box flexShrink={0} marginLeft={1}>
