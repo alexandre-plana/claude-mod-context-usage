@@ -230,22 +230,10 @@ export const register: Register = on => {
         ))}
       </Box>
     )
-    // Zones de survol invisibles posées sur la barre : une par catégorie, la carte s'ouvre au-dessus de celle survolée.
-    const usedFrac = shown.reduce((a, c) => a + c.tokens / Math.max(1, s.max), 0)
-    const zones = shown.map(c => ({ name: c.name, frac: c.tokens / Math.max(1, s.max) }))
-    zones.push({ name: 'Free space', frac: Math.max(0, 1 - usedFrac) })
-    let acc = 0
+    // Une seule zone de survol sur toute la barre : une seule carte, jamais plusieurs à la fois.
     const overlay = (
-      <Box position="absolute" top={0} left={0} right={0} height={1} flexDirection="row">
-        {zones.map((z, i) => {
-          const side = acc + z.frac / 2 > 0.5 ? 'right' : 'left'
-          acc += z.frac
-          return (
-            <Box key={`z${i}`} flexGrow={Math.max(1, Math.round(z.frac * 1000))} height={1}>
-              {card(z.name, side)}
-            </Box>
-          )
-        })}
+      <Box key="barzone" position="absolute" top={0} left={0} right={0} height={1}>
+        {card('', 'left')}
       </Box>
     )
 

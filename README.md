@@ -7,7 +7,7 @@ Un mod pour Claude Code qui affiche en permanence l'utilisation du contexte de l
 - **Une seule ligne** : pourcentage utilisé, barre fine colorée par catégorie (messages, outils système, fichiers mémoire, outils MCP, etc.) qui occupe la largeur disponible, compteur `tokens / fenêtre`, menu **Auto** et bouton **Compacter**.
 - **Bouton Compacter** : lance le compactage de la conversation, comme `/compact`. Raccourci `c` quand la bande a le focus.
 - **Compactage automatique** : le menu déroulant **Auto** fixe un seuil (Désactivé, 300k, 400k… jusqu'à 1M). Quand le contexte atteint ce seuil, à la fin d'un tour, le mod lance le compactage (au plus une fois par minute). Le seuil est mémorisé d'une session à l'autre.
-- **Détail au survol** : en passant la souris sur la barre, une carte affiche le détail par catégorie (tokens et pourcentage), comme `/context`. Elle s'ouvre au-dessus de la catégorie survolée.
+- **Détail au survol** : en passant la souris sur la barre, une carte affiche le détail par catégorie (tokens et pourcentage), comme `/context`. Une seule carte, ouverte au-dessus du début de la barre.
 - **État de chargement** : pendant un compactage, la barre est atténuée avec un reflet animé et le texte devient « Compactage… ». Pendant le compactage, le menu et le bouton sont désactivés.
 - Le texte et les couleurs suivent le thème de l'application : même typographie que Claude Code.
 
