@@ -2,5 +2,10 @@
   "name": "context-band",
   "version": "0.1.0",
   "description": "Jauge de contexte permanente au-dessus de la barre de chat : mode condensé (barre colorée, Compacter, Étendre) et mode étendu avec graphiques détaillés.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Alexandre Plana"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/alexandre-plana/claude-mod-context-usage"
 }

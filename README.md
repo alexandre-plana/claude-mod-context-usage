@@ -74,4 +74,4 @@ types/index.d.ts             types de l'état partagé du mod
 
 ## Licence
 
-Aucune licence n'est précisée pour le moment.
+[MIT](LICENSE) © 2026 Alexandre Plana
